@@ -10,6 +10,13 @@
     {
       "matchUpdateTypes": ["lockFileMaintenance"],
       "automerge": true
+    },
+    {
+      "description": "Let Maven artifacts propagate before updating",
+      "matchDatasources": ["maven"],
+      "matchUpdateTypes": ["major", "minor", "patch"],
+      "minimumReleaseAge": "1 day",
+      "internalChecksFilter": "strict"
     }
   ],
   "customManagers": [
