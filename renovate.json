@@ -17,9 +17,34 @@
       "matchUpdateTypes": ["major", "minor", "patch"],
       "minimumReleaseAge": "1 day",
       "internalChecksFilter": "strict"
+    },
+    {
+      "description": "Only propose Ubuntu snapshots whose timestamp has passed, since a future snapshot ID isn't fixed yet, and automerge them, including the yearly major bump",
+      "matchDatasources": ["custom.ubuntu-snapshot"],
+      "minimumReleaseAge": "1 hour",
+      "internalChecksFilter": "strict",
+      "automerge": true
     }
   ],
+  "customDatasources": {
+    "ubuntu-snapshot": {
+      "defaultRegistryUrlTemplate": "https://api.launchpad.net/devel/ubuntu/+archive/primary?ws.op=getPublishedSources&distro_series=https://api.launchpad.net/devel/ubuntu/{{packageName}}&pocket=Security&status=Published&order_by_date=true&ws.size=20",
+      "transformTemplates": [
+        "{'releases': [$distinct(entries.date_published).($t := $toMillis($substring($, 0, 19) & 'Z') + 7200000; {'version': $fromMillis($t, '[Y0001][M01][D01]T[H01][m01][s01]Z'), 'releaseTimestamp': $fromMillis($t)})]}"
+      ]
+    }
+  },
   "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Ubuntu archive snapshot that a Dockerfile's apt installs come from, bumped to 2h after each new security publication for the series (a snapshot picks up a publication up to ~1h after Launchpad marks it published)",
+      "managerFilePatterns": ["/(^|/)Dockerfile($|\\.)/"],
+      "matchStrings": ["ARG UBUNTU_SNAPSHOT=(?<currentValue>\\d{8}T\\d{6}Z)"],
+      "depNameTemplate": "ubuntu-snapshot",
+      "packageNameTemplate": "noble",
+      "datasourceTemplate": "custom.ubuntu-snapshot",
+      "versioningTemplate": "regex:^(?<major>\\d{4})(?<minor>\\d{2})(?<patch>\\d{2})T(?<build>\\d{6})Z$"
+    },
     {
       "customType": "regex",
       "managerFilePatterns": ["/(^|/)Dockerfile($|\\.)/"],
